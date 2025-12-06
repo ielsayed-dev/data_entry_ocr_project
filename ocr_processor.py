@@ -183,3 +183,32 @@ def main():
     print(f"Found {len(pdf_files)} PDF files.")
 
     for pdf_file in pdf_files:
+        print(f"Processing {pdf_file}...")
+        full_path = os.path.join(INPUT_FOLDER, pdf_file)
+        
+        try:
+            pages = convert_from_path(full_path, dpi=300)
+        except Exception as e:
+            print(f"Skipping {pdf_file}: {e}")
+            continue
+            
+        for i, page_img in enumerate(pages):
+            temp_img_path = "temp_page.jpg"
+            page_img.save(temp_img_path, 'JPEG')
+            
+            page_data = process_page_layout(temp_img_path, pdf_file, i+1)
+            
+            if page_data: 
+                all_records.extend(page_data)
+            
+            os.remove(temp_img_path)
+
+    if all_records:
+        df = pd.DataFrame(all_records)
+        df.to_excel(OUTPUT_FILE, index=False)
+        print(f"Done! Saved to {OUTPUT_FILE}")
+    else:
+        print("No names found. Check image quality or Regex patterns.")
+
+if __name__ == "__main__":
+    main()
